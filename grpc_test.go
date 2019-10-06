@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"testing"
 
@@ -11,7 +10,8 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func BenchmarkGRPC_WithWokers(b *testing.B) {
+func BenchmarkGRPCHTTP11_4(b *testing.B) {
+	const numWorkers = 4
 	conn, err := grpc.Dial("localhost:9092", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Dial failed: %v", err)
@@ -31,27 +31,8 @@ func BenchmarkGRPC_WithWokers(b *testing.B) {
 	}
 }
 
-func BenchmarkGRPC_NoWorkers(b *testing.B) {
-	conn, err := grpc.Dial("localhost:9092", grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Dial failed: %v", err)
-	}
-	client := pb.NewRandomServiceClient(conn)
-
-	request := testutils.Request{
-		Random: &pb.Random{
-			RandomInt:    2019,
-			RandomString: "a_string",
-		},
-	}
-
-	_, err = client.DoSomething(context.TODO(), request.Random)
-	if err != nil {
-		log.Printf("Error sending grpc request: %v\n", err)
-	}
-}
-
-func BenchmarkTlsGRPC_WithWokers(b *testing.B) {
+func BenchmarkGRPCHTTP2_4(b *testing.B) {
+	const numWorkers = 4
 	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
 	if err != nil {
 		log.Fatal(err)
@@ -75,7 +56,8 @@ func BenchmarkTlsGRPC_WithWokers(b *testing.B) {
 	}
 }
 
-func BenchmarkTlsGRPC_NoWorkers(b *testing.B) {
+func BenchmarkGRPCHTTP2_8(b *testing.B) {
+	const numWorkers = 8
 	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
 	if err != nil {
 		log.Fatal(err)
@@ -85,16 +67,66 @@ func BenchmarkTlsGRPC_NoWorkers(b *testing.B) {
 		log.Fatalf("Dial failed: %v", err)
 	}
 	client := pb.NewRandomServiceClient(conn)
+	requestQueue := make(chan testutils.Request)
+	defer testutils.StartWorkers(&requestQueue, numWorkers, testutils.StartGRPCWorkerFunc(client))()
+	b.ResetTimer() // don't count worker initialization time
 
-	request := testutils.Request{
-		Random: &pb.Random{
-			RandomInt:    2019,
-			RandomString: "a_string",
-		},
+	for i := 0; i < b.N; i++ {
+		requestQueue <- testutils.Request{
+			Random: &pb.Random{
+				RandomInt:    2019,
+				RandomString: "a_string",
+			},
+		}
 	}
+}
 
-	_, err = client.DoSomething(context.TODO(), request.Random)
+func BenchmarkGRPCHTTP2_16(b *testing.B) {
+	const numWorkers = 16
+	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
 	if err != nil {
-		log.Printf("Error sending grpc request: %v\n", err)
+		log.Fatal(err)
+	}
+	conn, err := grpc.Dial("localhost:9093", grpc.WithTransportCredentials(creds))
+	if err != nil {
+		log.Fatalf("Dial failed: %v", err)
+	}
+	client := pb.NewRandomServiceClient(conn)
+	requestQueue := make(chan testutils.Request)
+	defer testutils.StartWorkers(&requestQueue, numWorkers, testutils.StartGRPCWorkerFunc(client))()
+	b.ResetTimer() // don't count worker initialization time
+
+	for i := 0; i < b.N; i++ {
+		requestQueue <- testutils.Request{
+			Random: &pb.Random{
+				RandomInt:    2019,
+				RandomString: "a_string",
+			},
+		}
+	}
+}
+
+func BenchmarkGRPCHTTP2_32(b *testing.B) {
+	const numWorkers = 32
+	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := grpc.Dial("localhost:9093", grpc.WithTransportCredentials(creds))
+	if err != nil {
+		log.Fatalf("Dial failed: %v", err)
+	}
+	client := pb.NewRandomServiceClient(conn)
+	requestQueue := make(chan testutils.Request)
+	defer testutils.StartWorkers(&requestQueue, numWorkers, testutils.StartGRPCWorkerFunc(client))()
+	b.ResetTimer() // don't count worker initialization time
+
+	for i := 0; i < b.N; i++ {
+		requestQueue <- testutils.Request{
+			Random: &pb.Random{
+				RandomInt:    2019,
+				RandomString: "a_string",
+			},
+		}
 	}
 }

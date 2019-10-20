@@ -26,3 +26,4 @@ PASS
 ok    github.com/jbactad/grpc-vs-rest 267.026s
 ```
 
+<!-- rest 245 bytes -->

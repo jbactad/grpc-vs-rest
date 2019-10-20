@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/jbactad/grpc-vs-rest/logger"
+	"go.uber.org/zap"
 	"log"
 	"net/http"
 
@@ -9,7 +11,8 @@ import (
 )
 
 func handle(w http.ResponseWriter, req *http.Request) {
-	log.Println("Request received.")
+	logger.Logger.Info("Request received.")
+	logger.Logger.Info("headers intercepted", zap.Any("header", req.Header))
 	random := pb.Random{RandomString: "a_random_string", RandomInt: 1984}
 
 	bytes, err := json.Marshal(&random)
@@ -22,7 +25,7 @@ func handle(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	server := &http.Server{Addr: "localhost:9091", Handler: http.HandlerFunc(handle)}
-	log.Println("Starting secured rest server at port")
-	log.Fatal(server.ListenAndServeTLS("../certs/server.crt", "../certs/server.key"))
+	server := &http.Server{Addr: "0.0.0.0:9091", Handler: http.HandlerFunc(handle)}
+	logger.Logger.Info("Starting secured rest server at port 9091")
+	log.Fatal(server.ListenAndServeTLS("/etc/certs/server.crt", "/etc/certs/server.key"))
 }

@@ -2,6 +2,12 @@ package main
 
 import (
 	"context"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_zap "github.com/grpc-ecosystem/go-grpc-middleware/logging/zap"
+	"github.com/jbactad/grpc-vs-rest/logger"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/reflection"
 	"log"
 	"net"
 
@@ -13,27 +19,43 @@ import (
 type server struct{}
 
 func main() {
-	creds, err := credentials.NewServerTLSFromFile("../certs/server.crt", "../certs/server.key")
+	creds, err := credentials.NewServerTLSFromFile("/etc/certs/server.crt", "/etc/certs/server.key")
 	if err != nil {
 		log.Fatalf("Failed to setup TLS: %v", err)
 	}
 
-	lis, err := net.Listen("tcp", ":9093")
+	lis, err := net.Listen("tcp", "0.0.0.0:9093")
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
-	s := grpc.NewServer(grpc.Creds(creds))
+
+	opts := []grpc.ServerOption{
+		grpc.Creds(creds),
+		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+			grpc_zap.UnaryServerInterceptor(logger.Logger),
+		)),
+	}
+
+	s := grpc.NewServer(opts...)
+
+	reflection.Register(s)
+
 	pb.RegisterRandomServiceServer(s, &server{})
 
-	log.Println("Starting secured gRPC server at port 9093")
+	logger.Logger.Info("Starting secured gRPC server at port 9093")
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
 }
 
-func (s *server) DoSomething(_ context.Context, random *pb.Random) (*pb.Random, error) {
-	log.Println("Request received.")
+func (s *server) DoSomething(ctx context.Context, random *pb.Random) (*pb.Random, error) {
+	logger.Logger.Info("Request received.")
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		logger.Logger.Info("headers intercepted", zap.Any("header", md))
+	}
+
 	random.RandomString = "[Updated] " + random.RandomString
 	return random, nil
 }

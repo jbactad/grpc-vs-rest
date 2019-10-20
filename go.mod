@@ -3,7 +3,7 @@ module github.com/jbactad/grpc-vs-rest
 go 1.12
 
 require (
-	github.com/Bimde/grpc-vs-rest/pb v0.0.0-20190517134913-686fe1c29026
+	github.com/Bimde/grpc-vs-rest/pb v0.0.0-20190517134913-686fe1c29026 // indirect
 	github.com/CodingBerg/benchgraph v0.0.0-20160127080251-f9c026b66777 // indirect
 	github.com/fatih/color v1.7.0 // indirect
 	github.com/golang/protobuf v1.3.2

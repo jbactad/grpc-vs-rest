@@ -10,27 +10,6 @@ import (
 	"google.golang.org/grpc/credentials"
 )
 
-func BenchmarkGRPCHTTP11_4(b *testing.B) {
-	const numWorkers = 4
-	conn, err := grpc.Dial("localhost:9092", grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Dial failed: %v", err)
-	}
-	client := pb.NewRandomServiceClient(conn)
-	requestQueue := make(chan testutils.Request)
-	defer testutils.StartWorkers(&requestQueue, numWorkers, testutils.StartGRPCWorkerFunc(client))()
-	b.ResetTimer() // don't count worker initialization time
-
-	for i := 0; i < b.N; i++ {
-		requestQueue <- testutils.Request{
-			Random: &pb.Random{
-				RandomInt:    2019,
-				RandomString: "a_string",
-			},
-		}
-	}
-}
-
 func BenchmarkGRPCHTTP2_4(b *testing.B) {
 	const numWorkers = 4
 	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
@@ -108,6 +87,106 @@ func BenchmarkGRPCHTTP2_16(b *testing.B) {
 
 func BenchmarkGRPCHTTP2_32(b *testing.B) {
 	const numWorkers = 32
+	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := grpc.Dial("localhost:9093", grpc.WithTransportCredentials(creds))
+	if err != nil {
+		log.Fatalf("Dial failed: %v", err)
+	}
+	client := pb.NewRandomServiceClient(conn)
+	requestQueue := make(chan testutils.Request)
+	defer testutils.StartWorkers(&requestQueue, numWorkers, testutils.StartGRPCWorkerFunc(client))()
+	b.ResetTimer() // don't count worker initialization time
+
+	for i := 0; i < b.N; i++ {
+		requestQueue <- testutils.Request{
+			Random: &pb.Random{
+				RandomInt:    2019,
+				RandomString: "a_string",
+			},
+		}
+	}
+}
+
+func BenchmarkGRPCHTTP2_64(b *testing.B) {
+	const numWorkers = 64
+	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := grpc.Dial("localhost:9093", grpc.WithTransportCredentials(creds))
+	if err != nil {
+		log.Fatalf("Dial failed: %v", err)
+	}
+	client := pb.NewRandomServiceClient(conn)
+	requestQueue := make(chan testutils.Request)
+	defer testutils.StartWorkers(&requestQueue, numWorkers, testutils.StartGRPCWorkerFunc(client))()
+	b.ResetTimer() // don't count worker initialization time
+
+	for i := 0; i < b.N; i++ {
+		requestQueue <- testutils.Request{
+			Random: &pb.Random{
+				RandomInt:    2019,
+				RandomString: "a_string",
+			},
+		}
+	}
+}
+
+func BenchmarkGRPCHTTP2_128(b *testing.B) {
+	const numWorkers = 128
+	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := grpc.Dial("localhost:9093", grpc.WithTransportCredentials(creds))
+	if err != nil {
+		log.Fatalf("Dial failed: %v", err)
+	}
+	client := pb.NewRandomServiceClient(conn)
+	requestQueue := make(chan testutils.Request)
+	defer testutils.StartWorkers(&requestQueue, numWorkers, testutils.StartGRPCWorkerFunc(client))()
+	b.ResetTimer() // don't count worker initialization time
+
+	for i := 0; i < b.N; i++ {
+		requestQueue <- testutils.Request{
+			Random: &pb.Random{
+				RandomInt:    2019,
+				RandomString: "a_string",
+			},
+		}
+	}
+}
+
+func BenchmarkGRPCHTTP2_256(b *testing.B) {
+	const numWorkers = 256
+	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
+	if err != nil {
+		log.Fatal(err)
+	}
+	conn, err := grpc.Dial("localhost:9093", grpc.WithTransportCredentials(creds))
+	if err != nil {
+		log.Fatalf("Dial failed: %v", err)
+	}
+	client := pb.NewRandomServiceClient(conn)
+	requestQueue := make(chan testutils.Request)
+	defer testutils.StartWorkers(&requestQueue, numWorkers, testutils.StartGRPCWorkerFunc(client))()
+	b.ResetTimer() // don't count worker initialization time
+
+	for i := 0; i < b.N; i++ {
+		requestQueue <- testutils.Request{
+			Random: &pb.Random{
+				RandomInt:    2019,
+				RandomString: "a_string",
+			},
+		}
+	}
+}
+
+func BenchmarkGRPCHTTP2_512(b *testing.B) {
+	const numWorkers = 512
 	creds, err := credentials.NewClientTLSFromFile("./certs/server.crt", "localhost")
 	if err != nil {
 		log.Fatal(err)

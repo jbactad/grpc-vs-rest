@@ -35,7 +35,7 @@ func CreateTLSConfigWithCustomCert(certPath string) *tls.Config {
 	return tlsConfig
 }
 
-func StartGRPCWorkerFunc(client pb.RandomServiceClient) WorkerFunc {
+func StartGRPCWorkerFunc(client pb.TransactionServiceClient) WorkerFunc {
 	return func(requestQueue *chan Request, wg *sync.WaitGroup) {
 		go func() {
 			for {
@@ -44,7 +44,7 @@ func StartGRPCWorkerFunc(client pb.RandomServiceClient) WorkerFunc {
 					wg.Done()
 					return
 				}
-				_, err := client.DoSomething(context.TODO(), request.Random)
+				_, err := client.CreateTransaction(context.TODO(), SampleTransactionRequest())
 				if err != nil {
 					log.Printf("Error sending grpc request: %v\n", err)
 				}
@@ -77,7 +77,12 @@ func StartWorkerFunc(client http.Client) WorkerFunc {
 					wg.Done()
 					return
 				}
-				Get(client, request.Path, request.Random)
+				resp := &pb.Transaction{}
+
+				err := Get(client, request.Path, resp)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}()
 	}
@@ -92,8 +97,56 @@ func StartPostWorkerFunc(client http.Client) WorkerFunc {
 					wg.Done()
 					return
 				}
-				Post(client, request.Path, request.Random, request.Random)
+				resp := &pb.Transaction{}
+				err := Post(client, request.Path, request.Transaction, resp)
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}()
+	}
+}
+
+func SampleTransactionRequest() *pb.CreateTransactionRequest {
+	return &pb.CreateTransactionRequest{
+		Transaction: SampleTransaction(),
+	}
+}
+func SampleTransaction() *pb.Transaction {
+	return &pb.Transaction{
+		Date:                 0,
+		ExternalId:           0,
+		Source:               0,
+		Type:                 0,
+		PropertyReference:    "",
+		Price:                0,
+		VerificationStatus:   "",
+		RejectionReason:      "",
+		VerifiedAt:           0,
+		Furnishing:           0,
+		DeveloperName:        "",
+		ChequeCount:          0,
+		BedroomCount:         0,
+		BathroomCount:        0,
+		BuiltUpArea:          0,
+		PlotSize:             0,
+		UnitNumber:           "",
+		FloorLevel:           "",
+		Location:             nil,
+		PropertyType:         "",
+		Seller:               nil,
+		Buyer:                nil,
+		Landlord:             nil,
+		Tenant:               nil,
+		IsChillerInclusive:   false,
+		HasStudyRoom:         false,
+		HasMaidRoom:          false,
+		Views:                nil,
+		ProjectStatus:        "",
+		ContractDuration:     "",
+		Commission:           nil,
+		XXX_NoUnkeyedLiteral: struct{}{},
+		XXX_unrecognized:     nil,
+		XXX_sizecache:        0,
 	}
 }

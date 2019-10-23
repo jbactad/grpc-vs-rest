@@ -3,16 +3,15 @@ package testutils
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/jbactad/grpc-vs-rest/pb"
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/jbactad/grpc-vs-rest/pb"
 )
 
 type Request struct {
-	Path   string
-	Random *pb.Random
+	Path        string
+	Transaction pb.Transaction
 }
 
 func Get(client http.Client, path string, output interface{}) error {
@@ -28,13 +27,13 @@ func Get(client http.Client, path string, output interface{}) error {
 		return err
 	}
 
-	bytes, err := ioutil.ReadAll(res.Body)
+	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Println("error reading response body ", err)
 		return err
 	}
 
-	err = json.Unmarshal(bytes, output)
+	err = json.Unmarshal(b, output)
 	if err != nil {
 		log.Println("error unmarshaling response ", err)
 		return err
@@ -63,13 +62,13 @@ func Post(client http.Client, path string, input interface{}, output interface{}
 		return err
 	}
 
-	bytes, err := ioutil.ReadAll(res.Body)
+	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		log.Println("error reading response body ", err)
 		return err
 	}
 
-	err = json.Unmarshal(bytes, output)
+	err = json.Unmarshal(b, output)
 	if err != nil {
 		log.Println("error unmarshaling response ", err)
 		return err

@@ -18,6 +18,18 @@ import (
 
 type server struct{}
 
+func (s *server) CreateTransaction(ctx context.Context, req *pb.CreateTransactionRequest) (*pb.CreateTransactionResponse, error) {
+	logger.Logger.Info("Request received.")
+	md, ok := metadata.FromIncomingContext(ctx)
+	if ok {
+		logger.Logger.Info("headers intercepted", zap.Any("header", md))
+	}
+
+	return &pb.CreateTransactionResponse{
+		Transaction: req.Transaction,
+	}, nil
+}
+
 func main() {
 	creds, err := credentials.NewServerTLSFromFile("/etc/certs/server.crt", "/etc/certs/server.key")
 	if err != nil {
@@ -40,22 +52,12 @@ func main() {
 
 	reflection.Register(s)
 
-	pb.RegisterRandomServiceServer(s, &server{})
+	// pb.RegisterRandomServiceServer(s, &server{})
+	pb.RegisterTransactionServiceServer(s, &server{})
 
 	logger.Logger.Info("Starting secured gRPC server at port 9093")
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve: %v", err)
 	}
-}
-
-func (s *server) DoSomething(ctx context.Context, random *pb.Random) (*pb.Random, error) {
-	logger.Logger.Info("Request received.")
-	md, ok := metadata.FromIncomingContext(ctx)
-	if ok {
-		logger.Logger.Info("headers intercepted", zap.Any("header", md))
-	}
-
-	random.RandomString = "[Updated] " + random.RandomString
-	return random, nil
 }
